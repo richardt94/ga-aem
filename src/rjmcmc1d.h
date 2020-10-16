@@ -224,6 +224,10 @@ class rjMcMC1DModel{
 	//residual^2
 	std::vector<double> r2;
 
+	//debug parameter - raw residual
+	//(not needed for the inversion)
+	std::vector<double> residuals;
+
 public:
 	//variance vector (assuming a diagonal
 	//covariance matrix for now).
@@ -283,6 +287,17 @@ public:
 		std::vector<double> v;
 		v.resize(r2.size());
 		for (size_t i = 0; i<r2.size(); i++)v[i] = r2[i];
+		return v;
+	}
+
+	void set_raw_residuals(const std::vector<double>& resid) {
+		residuals = resid;
+	}
+
+	std::vector<double> get_raw_residuals() const {
+		std::vector<double> v;
+		v.resize(residuals.size());
+		for (size_t i = 0; i<residuals.size(); i++)v[i] = residuals[i];
 		return v;
 	}
 
@@ -974,9 +989,24 @@ public:
 	void set_misfit(rjMcMC1DModel& m)
 	{
 
-		std::vector<double> res = computeresiduals(m);
+		//std::vector<double> res = computeresiduals(m);
 		//double mfit = computemisfit(m);
 		//double mfit = (double)ndata;
+
+		std::vector<double> pred = forwardmodel(m);
+		std::vector<double> raw(ndata);
+
+		for (size_t di = 0; di < ndata; di++) {
+			raw[di] = pred[di]-obs[di];
+		}
+		m.set_raw_residuals(raw);
+
+		std::vector<double> res;
+		for (size_t di = 0; di < ndata; di++) {
+			double rd = raw[di] / obs[di];
+			res[di] = rd*rd;
+		}
+		m.set_residuals(res);
 
 		double negloglike = 0.0;
 		for (size_t di = 0; di < ndata; di++) {
@@ -1719,6 +1749,7 @@ public:
 			std::vector<std::vector<double>> sigma;
 			std::vector<std::vector<double>> nuvals;
 			std::vector<std::vector<double>> residuals;
+			std::vector<std::vector<double>> rawr;
 
 			for (const rjMcMC1DModel& mod : ensemble) {
 				cond.push_back(mod.getvalues());
@@ -1729,6 +1760,7 @@ public:
 				//sign of errors as well to test for correlated
 				//residuals if we want to do that
 				residuals.push_back(mod.get_residuals());
+				rawr.push_back(mod.get_raw_residuals());
 			}
 
 			netCDF::NcVlenType vdub = nc.addVlenType("vlen_double_array", netCDF::ncDouble);
@@ -1738,6 +1770,7 @@ public:
 			NcVar cond_var = nc.addVar("ensemble_cond", vdub, ensemble_dim);
 			NcVar thick_var = nc.addVar("ensemble_thick", vdub, ensemble_dim);
 			NcVar residuals_var = nc.addVar("ensemble_residuals", NcType::nc_DOUBLE, {ensemble_dim, data_dim});
+			NcVar rawr_var = nc.addVar("ensemble_raw_residuals", NcType::nc_DOUBLE, {ensemble_dim, data_dim});
 			NcVar noise_var;
 			NcVar nuisance_var;
 			if (!noise_dim.isNull()) {
@@ -1759,6 +1792,7 @@ public:
 				cond_var.putVar({i}, {1}, &mod_cond);
 				thick_var.putVar({i}, {1}, &mod_thick);
 				residuals_var.putVar({i,0}, {1,residuals[i].size()}, residuals[i].data());
+				rawr_var.putVar({i,0}, {1,rawr[i].size()}, rawr[i].data());
 				if (!noise_dim.isNull()) {
 					noise_var.putVar({i,0}, {1,sigma[i].size()}, sigma[i].data());
 				}
