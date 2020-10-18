@@ -1001,7 +1001,7 @@ public:
 		}
 		m.set_raw_residuals(raw);
 
-		std::vector<double> res;
+		std::vector<double> res(ndata);
 		for (size_t di = 0; di < ndata; di++) {
 			double rd = raw[di] / obs[di];
 			res[di] = rd*rd;
