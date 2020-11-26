@@ -78,3 +78,8 @@ target_link_libraries(garjmcmctdem PRIVATE netcdf netcdf_c++4 fftw3)
 target_link_libraries(galeisbstdem PRIVATE netcdf netcdf_c++4 fftw3)
 target_link_libraries(galeiallatonce PRIVATE netcdf netcdf_c++4 fftw3)
 target_link_libraries(gaforwardmodeltdem PRIVATE fftw3)
+
+install(
+  TARGETS garjmcmctdem galeisbstdem gaforwardmodeltdem
+  RUNTIME DESTINATION bin
+)
