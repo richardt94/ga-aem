@@ -30,6 +30,7 @@ Building GA-AEM on Linux requires that you install the following software:
 - [CMake](https://cmake.org/) >= 3.12
 - [netCDF-4](https://www.unidata.ucar.edu/software/netcdf/) with C++ bindings and headers
 - [fftw3](http://www.fftw.org/) with headers
+
 For production-scale inversions, you will also need a working MPI installation on your system, and the MPI headers must be on your compiler's search path.
 
 There are also legacy shell scripts and makefiles in the makefiles subdirectory for use with make. These will require you to manually specify which compiler you would like to use (GCC or Intel compiler) and are not actively maintained, so the CMake build system is recommended.
